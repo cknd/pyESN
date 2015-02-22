@@ -1,26 +1,51 @@
 import numpy as np
 
+
+print("####\n\nreloaded! \n\n####")
+
+
 class ESN():
-    def __init__(self,n_inputunits,n_reservoir,n_outunits,spectral_radius,sparsity=0.2,noise=0.001,
+
+    def _correct_dimensions(self,s,targetlength):
+        """checks the dimensionality of some numeric argument s. s can be None,
+        a scalar or a 1D array of correct length. If it's a scalar, it gets
+        broadcasted to the necessary length."""
+        if s is not None:
+            s = np.array(s)
+            if s.ndim == 0:
+                if targetlength > 1:
+                   s = np.array([s]*targetlength)
+            elif s.ndim == 1:
+                if not len(s) == targetlength:
+                    raise ValueError("Vector needs to be of length"+str(targetlength))
+            else:
+                raise ValueError("Invalid argument")
+        return s
+
+
+    def __init__(self,n_inputunits,n_outunits,n_reservoir=99,spectral_radius=0.25,sparsity=0.2,noise=0.001,
                  input_shift=None,input_scaling=None,feedback_scaling=None,teacher_scaling=None,teacher_shift=None,
-                 output_activation=lambda x:x,inverse_output_activation=lambda x:x,random_state=None):
-        self.n_inputunits = n_inputunits
-        self.n_reservoir = n_reservoir
-        self.n_outunits = n_outunits
-        self.spectral_radius = spectral_radius
-        self.sparsity = sparsity
-        self.noise = noise
-        self.input_shift = input_shift
-        self.input_scaling = input_scaling
-        self.feedback_scaling = feedback_scaling
-        self.teacher_scaling = teacher_scaling
-        self.teacher_shift = teacher_shift
+                 output_activation=lambda x:x,inverse_output_activation=lambda x:x,random_state=None,teacher_forcing=True,silent=True):
+        self.n_inputunits = self._correct_dimensions(n_inputunits,1)
+        self.n_reservoir = self._correct_dimensions(n_reservoir,1)
+        self.n_outunits = self._correct_dimensions(n_outunits,1)
+        self.spectral_radius = self._correct_dimensions(spectral_radius,1)
+        self.sparsity = self._correct_dimensions(sparsity,1)
+        self.noise = self._correct_dimensions(noise,1)
+
+        self.input_shift = self._correct_dimensions(input_shift,n_inputunits)
+        self.input_scaling = self._correct_dimensions(input_scaling,n_inputunits)
+
+        self.feedback_scaling = self._correct_dimensions(feedback_scaling,1)
+        self.teacher_scaling = self._correct_dimensions(teacher_scaling,1)
+        self.teacher_shift = self._correct_dimensions(teacher_shift,1)
+
         self.output_activation = output_activation
         self.inverse_output_activation = inverse_output_activation
         self.random_state = random_state
 
         # the given random_state might be either an actual RandomState object, a seed or nothing
-        # (in which case we use the builtin one)
+        # (in which case we use numpy's builtin RandomState)
         if isinstance(random_state, np.random.RandomState):
             self.random_state_ = random_state
         elif random_state:
@@ -31,42 +56,47 @@ class ESN():
         else:
             self.random_state_ = np.random.mtrand._rand
 
+        self.teacher_forcing = teacher_forcing
+        self.silent = silent
         self.initweights()
 
     def initweights(self):
         # initialize recurrent weights:
-        W = np.random.rand(self.n_reservoir,self.n_reservoir) - 0.5
-        W[np.random.rand(*W.shape) < self.sparsity] = 0 # setting (self.sparsity) percent of connections to zero
+        W = self.random_state_.rand(self.n_reservoir,self.n_reservoir) - 0.5
+        W[self.random_state_.rand(*W.shape) < self.sparsity] = 0 # setting (self.sparsity) percent of connections to zero
         radius = np.max(np.abs(np.linalg.eigvals(W))) # find the spectral radius the recurrent weights
         self.W = W*(self.spectral_radius/radius) # rescale them to reach the requested spectral radius
 
         # initialize input, output, and feedback weights:
-        self.W_in = np.random.rand(self.n_reservoir, self.n_inputunits)*2-1
+        self.W_in = self.random_state_.rand(self.n_reservoir, self.n_inputunits)*2-1
         self.W_out = np.zeros((self.n_outunits, self.n_reservoir + self.n_inputunits))
-        self.W_feedb = (np.random.rand(self.n_reservoir, self.n_outunits)*2-1)*self.feedback_scaling
+        self.W_feedb = (self.random_state_.rand(self.n_reservoir, self.n_outunits)*2-1)*(self.feedback_scaling if self.feedback_scaling else 1)
 
     def _update(self,state,input_pattern,output_pattern):
-        preactivation = np.dot(self.W,state) + np.dot(self.W_in,input_pattern) + np.dot(self.W_feedb,output_pattern)
-        return np.tanh(preactivation) + self.noise*(np.random.rand(self.n_reservoir)-0.5)
+        if self.teacher_forcing:
+            preactivation = np.dot(self.W,state) + np.dot(self.W_in,input_pattern) + np.dot(self.W_feedb,output_pattern)
+        else:
+            preactivation = np.dot(self.W,state) + np.dot(self.W_in,input_pattern)
+        return np.tanh(preactivation) + self.noise*(self.random_state_.rand(self.n_reservoir)-0.5)
 
     def _scale_inputs(self,inputs):
-        if self.input_scaling:
+        if self.input_scaling is not None:
             inputs = np.dot(inputs,np.diag(self.input_scaling)) # multiply j'th column by j'th entry of input_scaling
-        if self.input_shift:
+        if self.input_shift is not None:
             inputs = inputs + self.input_shift
         return inputs
 
     def _scale_teacher(self,teacher):
-        if self.teacher_scaling:
+        if self.teacher_scaling is not None:
             teacher = teacher * self.teacher_scaling
-        if self.teacher_shift:
+        if self.teacher_shift is not None:
             teacher = teacher + self.teacher_shift
         return teacher
 
     def _unscale_teacher(self,teacher_scaled):
-        if self.teacher_shift:
+        if self.teacher_shift is not None:
             teacher_scaled = teacher_scaled - self.teacher_shift
-        if self.teacher_scaling:
+        if self.teacher_scaling is not None:
             teacher_scaled = teacher_scaled / self.teacher_scaling
         return teacher_scaled
 
@@ -79,16 +109,17 @@ class ESN():
         inputs_scaled = self._scale_inputs(inputs)
         teachers_scaled = self._scale_teacher(outputs)
 
-        print "harvesting states..."
+        if not self.silent: print("harvesting states...")
         # ...by iterating through the given input,output pairs:
         states = np.zeros((inputs.shape[0], self.n_reservoir))
         for n in range(1,inputs.shape[0]):
-            states[n,:] = self._update(states[n-1],inputs_scaled[n],teachers_scaled[n-1])
+            states[n,:] = self._update(states[n-1],inputs_scaled[n,:],teachers_scaled[n-1,:])
 
         # learn weights:
-        print "fitting..."
+        if not self.silent: print("fitting...")
+        transient = min(int(inputs.shape[1]/10),100)
         extended_states = np.hstack((states,inputs_scaled))
-        self.W_out = np.dot(np.linalg.pinv(extended_states[100:,:]),self.inverse_output_activation(teachers_scaled[100:,:])).T
+        self.W_out = np.dot(np.linalg.pinv(extended_states[transient:,:]),self.inverse_output_activation(teachers_scaled[transient:,:])).T
 
         # remember the last state
         self.laststate = states[-1,:]
@@ -102,9 +133,9 @@ class ESN():
             plt.imshow(extended_states.T,aspect='auto',interpolation='nearest')
             plt.colorbar()
 
-        print "training error:"
+        if not self.silent: print("training error:")
         pred_train = self.predict(inputs,continuation=False)
-        print np.sqrt(np.mean((pred_train - outputs)**2))
+        if not self.silent: print(np.sqrt(np.mean((pred_train - outputs)**2)))
         return pred_train
 
 
@@ -125,7 +156,7 @@ class ESN():
 
 
         for n in range(1,n_samples):
-            states[n,:] = self._update(states[n-1],inputs[n],outputs[n-1])
+            states[n,:] = self._update(states[n-1,:],inputs[n,:],outputs[n-1,:])
             outputs[n,:] = self.output_activation(np.dot(self.W_out, np.concatenate([states[n,:],inputs[n,:]]) ))
 
         return self._unscale_teacher(self.output_activation(outputs[1:]))
