@@ -133,8 +133,8 @@ class Performance(unittest.TestCase):
         except IOError:
             self.skipTest("missing data")
 
-        esn = ESN(n_inputunits = 1,
-                  n_outunits = 1,
+        esn = ESN(n_inputs = 1,
+                  n_outputs = 1,
                   n_reservoir = 500,
                   spectral_radius = 1.5,
                   random_state=42)
@@ -179,19 +179,18 @@ class Performance(unittest.TestCase):
         train_ctrl,train_output = frequency_control[:traintest_cutoff],frequency_output[:traintest_cutoff]
         test_ctrl, test_output  = frequency_control[traintest_cutoff:],frequency_output[traintest_cutoff:]
 
-        esn = ESN(n_inputunits = 2,
+        esn = ESN(n_inputs = 2,
+                  n_outputs = 1,
                   n_reservoir = 200,
-                  n_outunits = 1,
                   spectral_radius = 0.25,
                   sparsity = 0.95,
                   noise = 0.001,
                   input_shift = [0,0],
                   input_scaling = [0.01, 3],
-                  feedback_scaling = 0.8,
-                  teacher_scaling = 1.4,
+                  teacher_scaling = 1.12,
                   teacher_shift = -0.7,
-                  output_activation = np.tanh,
-                  inverse_output_activation = np.arctanh,
+                  out_activation = np.tanh,
+                  inverse_out_activation = np.arctanh,
                   random_state = rng,
                   silent = True)
 
@@ -199,7 +198,7 @@ class Performance(unittest.TestCase):
         #print "test error:"
         pred_test = esn.predict(test_ctrl)
         error = np.sqrt(np.mean((pred_test - test_output)**2))
-        self.assertAlmostEqual(error,0.395830714176)
+        self.assertAlmostEqual(error,0.390424480706)
 
 
 if __name__ == '__main__':

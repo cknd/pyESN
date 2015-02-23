@@ -1,9 +1,10 @@
-# Using an Echo State Network to learn a dynamical system
+# Echo State Networks in Python
 
-This is a simplified Python implementation of Herbert Jaeger's Echo State
-Network [learning to be a frequency generator](http://www.scholarpedia.org/article/Echo_state_network)
-controlled by an external signal. Echo State Networks are easy to train recurrent neural networks.
+[Echo State Networks](http://www.scholarpedia.org/article/Echo_state_network) are easy to train recurrent neural networks. I found the Matlab code in the linked article unnecessarily large and scary, so I started a smaller, self-contained implementation.
 
-This is not a tutorial on ESNs, but there are some colorful plots at the end.
+It does a bit of input sanitation, accepts various parameters and conforms roughly to the scikit-learn interface. So, in terms of complexity, it sits somewhere between this very helpful [minimal ESN script](http://minds.jacobs-university.de/mantas/code) and something like Jaeger's original [Matlab toolbox](http://www.faculty.jacobs-university.de/hjaeger/pubs/freqGen.zip).
 
-It's an Ipython notebook file - [view it on nbviewer](http://nbviewer.ipython.org/github/cluclu/pyESN/blob/master/ESN_freqgen.ipynb).
+# Examples
+
+- [learning to be a tunable frequency generator](http://nbviewer.ipython.org/github/cknd/pyESN/blob/master/freqgen.ipynb)
+- [learning a Mackey-Glass system](http://nbviewer.ipython.org/github/cknd/pyESN/blob/master/mackey.ipynb)
