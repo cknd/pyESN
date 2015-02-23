@@ -12,9 +12,9 @@ class ESN():
         broadcasted to the necessary length."""
         if s is not None:
             s = np.array(s)
+            #import ipdb; ipdb.set_trace()
             if s.ndim == 0:
-                if targetlength > 1:
-                   s = np.array([s]*targetlength)
+                s = np.array([s]*targetlength)
             elif s.ndim == 1:
                 if not len(s) == targetlength:
                     raise ValueError("Vector needs to be of length"+str(targetlength))
@@ -23,7 +23,7 @@ class ESN():
         return s
 
 
-    def __init__(self,n_inputunits,n_outunits,n_reservoir=99,spectral_radius=0.25,sparsity=0.2,noise=0.001,
+    def __init__(self,n_inputunits,n_outunits,n_reservoir=99,spectral_radius=0.95,sparsity=0,noise=0.001,
                  input_shift=None,input_scaling=None,feedback_scaling=None,teacher_scaling=None,teacher_shift=None,
                  output_activation=lambda x:x,inverse_output_activation=lambda x:x,random_state=None,teacher_forcing=True,silent=True):
         self.n_inputunits = self._correct_dimensions(n_inputunits,1)
@@ -64,7 +64,7 @@ class ESN():
         # initialize recurrent weights:
         W = self.random_state_.rand(self.n_reservoir,self.n_reservoir) - 0.5
         W[self.random_state_.rand(*W.shape) < self.sparsity] = 0 # setting (self.sparsity) percent of connections to zero
-        radius = np.max(np.abs(np.linalg.eigvals(W))) # find the spectral radius the recurrent weights
+        radius = np.max(np.abs(np.linalg.eigvals(W))) # spectral radius of the recurrent weights
         self.W = W*(self.spectral_radius/radius) # rescale them to reach the requested spectral radius
 
         # initialize input, output, and feedback weights:
@@ -81,7 +81,7 @@ class ESN():
 
     def _scale_inputs(self,inputs):
         if self.input_scaling is not None:
-            inputs = np.dot(inputs,np.diag(self.input_scaling)) # multiply j'th column by j'th entry of input_scaling
+            inputs = np.dot(inputs,np.diag(self.input_scaling)) # multiply j'th input feature by j'th entry of input_scaling
         if self.input_shift is not None:
             inputs = inputs + self.input_shift
         return inputs
@@ -102,9 +102,9 @@ class ESN():
 
     def fit(self,inputs,outputs,inspect=False):
         if inputs.ndim < 2:
-            inputs = np.reshape(inputs,(-1,len(inputs)))
+            inputs = np.reshape(inputs,(len(inputs),-1))
         if outputs.ndim < 2:
-            outputs = np.reshape(outputs,(-1,len(outputs)))
+            outputs = np.reshape(outputs,(len(outputs),-1))
         # adjust input and teacher signal:
         inputs_scaled = self._scale_inputs(inputs)
         teachers_scaled = self._scale_teacher(outputs)
@@ -140,6 +140,8 @@ class ESN():
 
 
     def predict(self,inputs,continuation=True):
+        if inputs.ndim < 2:
+            inputs = np.reshape(inputs,(len(inputs),-1))
         n_samples = inputs.shape[0]
         if continuation:
             laststate = self.laststate
