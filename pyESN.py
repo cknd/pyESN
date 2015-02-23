@@ -1,9 +1,5 @@
 import numpy as np
 
-
-print("####\n\nreloaded! \n\n####")
-
-
 class ESN():
 
     def _correct_dimensions(self,s,targetlength):
@@ -134,7 +130,7 @@ class ESN():
             plt.colorbar()
 
         if not self.silent: print("training error:")
-        pred_train = self.predict(inputs,continuation=False)
+        pred_train = self._unscale_teacher(self.output_activation(np.dot(extended_states,self.W_out.T)))
         if not self.silent: print(np.sqrt(np.mean((pred_train - outputs)**2)))
         return pred_train
 
