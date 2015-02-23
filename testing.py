@@ -28,13 +28,13 @@ class RandomStateHandling(unittest.TestCase):
         test(np.all(np.equal(esnA.predict(Xp), esnB.predict(Xp))))
 
     def test_integer(self):
-        """two esns with the same (valid) seed should be the same"""
+        """two esns with the same seed should be the same"""
         esnA = ESN(N_in,N_out,random_state=1)
         esnB = ESN(N_in,N_out,random_state=1)
         self._compare(esnA,esnB,self.task,should_be="same")
 
     def test_randomstate_object(self):
-        """two esns with the same randomstate object should be the same"""
+        """two esns with the same randomstate objects should be the same"""
         rstA = np.random.RandomState(1)
         esnA = ESN(N_in,N_out,random_state=rstA)
         rstB = np.random.RandomState(1)
@@ -63,7 +63,7 @@ class InitArguments(unittest.TestCase):
         self.X,self.y,self.Xp = random_task()
 
     def test_inputscaling(self):
-        """input scaling factors of different formats should be correctly accepted or rejected"""
+        """input scaling factors of different formats should be correctly intereted or rejected"""
         esn = ESN(N_in,N_out,input_scaling=2)
         self.assertTrue(np.all(2*self.X == esn._scale_inputs(self.X)))
         esn.fit(self.X,self.y)
@@ -86,7 +86,7 @@ class InitArguments(unittest.TestCase):
             esn = ESN(N_in,N_out,input_scaling=np.array([[2]*N_in]))
 
     def test_inputshift(self):
-        """input shift factors of different formats should be correctly accepted or rejected"""
+        """input shift factors of different formats should be correctly interpreted or rejected"""
         esn = ESN(N_in,N_out,input_shift=1)
         self.assertTrue(np.all(1+self.X == esn._scale_inputs(self.X)))
         esn.fit(self.X,self.y)
