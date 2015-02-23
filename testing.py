@@ -16,9 +16,9 @@ class RandomStateHandling(unittest.TestCase):
     def setUp(self):
         self.task = random_task()
 
-    def _compare(self,esnA,esnB,task,should_be):
+    def _compare(self,esnA,esnB,should_be):
         """helper function to see if two esns are the same"""
-        X,y,Xp = task
+        X,y,Xp = self.task
         test = self.assertTrue if should_be=="same" else self.assertFalse
         test(np.all(np.equal(esnA.W, esnB.W)))
         test(np.all(np.equal(esnA.W_in, esnB.W_in)))
@@ -31,7 +31,7 @@ class RandomStateHandling(unittest.TestCase):
         """two esns with the same seed should be the same"""
         esnA = ESN(N_in,N_out,random_state=1)
         esnB = ESN(N_in,N_out,random_state=1)
-        self._compare(esnA,esnB,self.task,should_be="same")
+        self._compare(esnA,esnB,should_be="same")
 
     def test_randomstate_object(self):
         """two esns with the same randomstate objects should be the same"""
@@ -39,13 +39,13 @@ class RandomStateHandling(unittest.TestCase):
         esnA = ESN(N_in,N_out,random_state=rstA)
         rstB = np.random.RandomState(1)
         esnB = ESN(N_in,N_out,random_state=rstB)
-        self._compare(esnA,esnB,self.task,should_be="same")
+        self._compare(esnA,esnB,should_be="same")
 
     def test_none(self):
         """two esns with no specified seed should be different"""
         esnA = ESN(N_in,N_out,random_state=None)
         esnB = ESN(N_in,N_out,random_state=None)
-        self._compare(esnA,esnB,self.task,should_be="different")
+        self._compare(esnA,esnB,should_be="different")
 
 
     def test_nonsense(self):
@@ -110,6 +110,7 @@ class InitArguments(unittest.TestCase):
 
     def test_IODimensions(self):
         """try different combinations of input & output dimensionalities & teacher forcing"""
+        # TODO: 1D vs 2D numpy vectors
         tasks = [(1,1,100,True),(10,1,100,True),(1,10,100,True),(10,10,100,True),
                  (1,1,100,False),(10,1,100,False),(1,10,100,False),(10,10,100,False)]
         for t in tasks:
@@ -124,10 +125,29 @@ class InitArguments(unittest.TestCase):
             self.assertEqual(prediction_t.shape,(N_samples,N_out))
 
 class Performance(unittest.TestCase):
-    # Slighty bending the concept of a unit test: I want to catch performance changes during refactoring.
+    # Slighty bending the concept of a unit test, I want to catch performance changes during refactoring.
     # Ideally, this will expand to a collection of known tasks.
+    def test_mackey(self):
+        try:
+            data = np.load('mackey_glass_t17.npy')
+        except IOError:
+            self.skipTest("missing data")
+
+        esn = ESN(n_inputunits = 1,
+                  n_outunits = 1,
+                  n_reservoir = 500,
+                  spectral_radius = 1.5,
+                  random_state=42)
+
+        trainlen = 2000
+        future = 2000
+        esn.fit(np.ones(trainlen),data[:trainlen])
+        prediction = esn.predict(np.ones(future))
+        error = np.sqrt(np.mean((prediction.flatten() - data[trainlen:trainlen+future])**2))
+        self.assertAlmostEqual(error,0.139607171323)
+
     def test_freqgen(self):
-        rng = np.random.RandomState(1)
+        rng = np.random.RandomState(42)
         def frequency_generator(N,min_period,max_period,n_changepoints):
             """returns a random step function + a sine wave signal that
                changes its frequency at each such step."""
@@ -159,7 +179,6 @@ class Performance(unittest.TestCase):
         train_ctrl,train_output = frequency_control[:traintest_cutoff],frequency_output[:traintest_cutoff]
         test_ctrl, test_output  = frequency_control[traintest_cutoff:],frequency_output[traintest_cutoff:]
 
-
         esn = ESN(n_inputunits = 2,
                   n_reservoir = 200,
                   n_outunits = 1,
@@ -174,14 +193,13 @@ class Performance(unittest.TestCase):
                   output_activation = np.tanh,
                   inverse_output_activation = np.arctanh,
                   random_state = rng,
-                  silent = False)
+                  silent = True)
 
         pred_train = esn.fit(train_ctrl,train_output)
         #print "test error:"
         pred_test = esn.predict(test_ctrl)
         error = np.sqrt(np.mean((pred_test - test_output)**2))
-        print("test error:\n"+str(error))
-        self.assertAlmostEqual(error,0.429239248551)
+        self.assertAlmostEqual(error,0.395830714176)
 
 
 if __name__ == '__main__':
