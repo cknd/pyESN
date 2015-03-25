@@ -1,30 +1,28 @@
 import numpy as np
 
+def correct_dimensions(s,targetlength):
+    """checks the dimensionality of some numeric argument s, broadcasts it
+       to the specified length if possible.
+
+    Args:
+        s: None, scalar or 1D array
+        targetlength: expected length of s
+
+    Returns:
+        None if s is None, else numpy vector of length targetlength
+    """
+    if s is not None:
+        s = np.array(s)
+        if s.ndim == 0:
+            s = np.array([s]*targetlength)
+        elif s.ndim == 1:
+            if not len(s) == targetlength:
+                raise ValueError("arg must have length "+str(targetlength))
+        else:
+            raise ValueError("Invalid argument")
+    return s
+
 class ESN():
-    def _correct_dimensions(self,s,targetlength):
-        """checks the dimensionality of some numeric argument s, broadcasts it
-           to the specified length if possible.
-
-        Args:
-            s: None, scalar or 1D array
-            targetlength: expected length of s
-
-        Returns:
-            None if s is None, else numpy vector of length targetlength
-        """
-        if s is not None:
-            s = np.array(s)
-            #import ipdb; ipdb.set_trace()
-            if s.ndim == 0:
-                s = np.array([s]*targetlength)
-            elif s.ndim == 1:
-                if not len(s) == targetlength:
-                    raise ValueError("arg must have length "+str(targetlength))
-            else:
-                raise ValueError("Invalid argument")
-        return s
-
-
     def __init__(self, n_inputs, n_outputs, n_reservoir=200,
                  spectral_radius=0.95, sparsity=0, noise=0.001,input_shift=None,
                  input_scaling=None, teacher_forcing=True,feedback_scaling=None,
@@ -54,18 +52,18 @@ class ESN():
             silent: supress messages
         """
         # check for proper dimensionality of all arguments and write them down.
-        self.n_inputs = self._correct_dimensions(n_inputs,1)
-        self.n_reservoir = self._correct_dimensions(n_reservoir,1)
-        self.n_outputs = self._correct_dimensions(n_outputs,1)
-        self.spectral_radius = self._correct_dimensions(spectral_radius,1)
-        self.sparsity = self._correct_dimensions(sparsity,1)
-        self.noise = self._correct_dimensions(noise,1)
+        self.n_inputs = correct_dimensions(n_inputs,1)
+        self.n_reservoir = correct_dimensions(n_reservoir,1)
+        self.n_outputs = correct_dimensions(n_outputs,1)
+        self.spectral_radius = correct_dimensions(spectral_radius,1)
+        self.sparsity = correct_dimensions(sparsity,1)
+        self.noise = correct_dimensions(noise,1)
         self.noise_ = self.noise
-        self.input_shift = self._correct_dimensions(input_shift,n_inputs)
-        self.input_scaling = self._correct_dimensions(input_scaling,n_inputs)
+        self.input_shift = correct_dimensions(input_shift,n_inputs)
+        self.input_scaling = correct_dimensions(input_scaling,n_inputs)
 
-        self.teacher_scaling = self._correct_dimensions(teacher_scaling,1)
-        self.teacher_shift = self._correct_dimensions(teacher_shift,1)
+        self.teacher_scaling = correct_dimensions(teacher_scaling,1)
+        self.teacher_shift = correct_dimensions(teacher_shift,1)
 
         self.out_activation = out_activation
         self.inverse_out_activation = inverse_out_activation

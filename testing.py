@@ -110,14 +110,13 @@ class InitArguments(unittest.TestCase):
 
     def test_IODimensions(self):
         """try different combinations of input & output dimensionalities & teacher forcing"""
-        # TODO: 1D vs 2D numpy vectors
         tasks = [(1,1,100,True),(10,1,100,True),(1,10,100,True),(10,10,100,True),
                  (1,1,100,False),(10,1,100,False),(1,10,100,False),(10,10,100,False)]
         for t in tasks:
             N_in ,N_out, N_samples, tf = t
-            X = np.random.randn(N_samples,N_in)
-            y = np.random.randn(N_samples,N_out)
-            Xp = np.random.randn(N_samples,N_in)
+            X = np.random.randn(N_samples,N_in)  if N_in > 1 else np.random.randn(N_samples)
+            y = np.random.randn(N_samples,N_out) if N_out > 1 else np.random.randn(N_samples)
+            Xp = np.random.randn(N_samples,N_in) if N_in > 1 else np.random.randn(N_samples)
             esn = ESN(N_in,N_out,teacher_forcing=tf)
             prediction_tr = esn.fit(X,y)
             prediction_t = esn.predict(Xp)
