@@ -1,6 +1,6 @@
 # Echo State Networks in Python
 
-[Echo State Networks](http://www.scholarpedia.org/article/Echo_state_network) are easy to train recurrent neural networks.This is a relatively simple, self-contained and well-documented implementation of such networks. It exists because I found the Matlab code in the linked article to be none of these things.
+[Echo State Networks](http://www.scholarpedia.org/article/Echo_state_network) are easy to train recurrent neural networks. Here is a relatively simple, self-contained and readable implementation of such networks. It exists because I found the Matlab code in the linked article to be none of these things.
 
 # Examples
 
