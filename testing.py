@@ -143,7 +143,7 @@ class Performance(unittest.TestCase):
         esn.fit(np.ones(trainlen),data[:trainlen])
         prediction = esn.predict(np.ones(future))
         error = np.sqrt(np.mean((prediction.flatten() - data[trainlen:trainlen+future])**2))
-        self.assertAlmostEqual(error,0.139607171323)
+        self.assertAlmostEqual(error,0.1396039098653574)
 
     def test_freqgen(self):
         rng = np.random.RandomState(42)
@@ -197,7 +197,7 @@ class Performance(unittest.TestCase):
         #print "test error:"
         pred_test = esn.predict(test_ctrl)
         error = np.sqrt(np.mean((pred_test - test_output)**2))
-        self.assertAlmostEqual(error,0.390424480706)
+        self.assertAlmostEqual(error,0.39037112433756577)
 
 
 if __name__ == '__main__':

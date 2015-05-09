@@ -232,9 +232,10 @@ class ESN():
         states = np.vstack([laststate, np.zeros((n_samples, self.n_reservoir))])
         outputs = np.vstack([lastoutput,np.zeros((n_samples, self.n_outputs))])
 
-        for n in range(1,n_samples):
-            states[n,:] = self._update(states[n-1,:],inputs[n,:],outputs[n-1,:])
-            outputs[n,:] = self.out_activation(np.dot(self.W_out,
-                                    np.concatenate([states[n,:],inputs[n,:]])))
+        for n in range(n_samples):
+            states[n+1,:] = self._update(states[n,:],inputs[n+1,:],outputs[n,:])
+            outputs[n+1,:] = self.out_activation(np.dot(self.W_out,
+                                    np.concatenate([states[n+1,:],inputs[n+1,:]])))
+
 
         return self._unscale_teacher(self.out_activation(outputs[1:]))
