@@ -191,7 +191,7 @@ class ESN():
         # remember the last state for later:
         self.laststate = states[-1, :]
         self.lastinput = inputs[-1, :]
-        self.lastoutput = outputs[-1, :]
+        self.lastoutput = teachers_scaled[-1, :]
 
         # optionally visualize the collected states
         if inspect:

@@ -213,7 +213,7 @@ class Performance(unittest.TestCase):
         # print "test error:"
         pred_test = esn.predict(test_ctrl)
         error = np.sqrt(np.mean((pred_test - test_output)**2))
-        self.assertAlmostEqual(error, 0.39037112433756577)
+        self.assertAlmostEqual(error, 0.30519018985725715)
 
 
 if __name__ == '__main__':
