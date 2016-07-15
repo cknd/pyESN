@@ -6,3 +6,8 @@
 
 - [learning to be a tunable frequency generator](http://nbviewer.ipython.org/github/cknd/pyESN/blob/master/freqgen.ipynb)
 - [learning a Mackey-Glass system](http://nbviewer.ipython.org/github/cknd/pyESN/blob/master/mackey.ipynb)
+
+
+## License
+
+The code is released under the [WTFPL](https://en.wikipedia.org/wiki/WTFPL).
