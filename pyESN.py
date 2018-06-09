@@ -24,13 +24,17 @@ def correct_dimensions(s, targetlength):
     return s
 
 
+def identity(x):
+    return x
+
+
 class ESN():
 
     def __init__(self, n_inputs, n_outputs, n_reservoir=200,
                  spectral_radius=0.95, sparsity=0, noise=0.001, input_shift=None,
                  input_scaling=None, teacher_forcing=True, feedback_scaling=None,
                  teacher_scaling=None, teacher_shift=None,
-                 out_activation=lambda x: x, inverse_out_activation=lambda x: x,
+                 out_activation=identity, inverse_out_activation=identity,
                  random_state=None, silent=True):
         """
         Args:

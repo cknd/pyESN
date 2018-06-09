@@ -58,6 +58,17 @@ class RandomStateHandling(unittest.TestCase):
             ESN(N_in, N_out, random_state=0.5)
         self.assertIn("Invalid seed", str(cm.exception))
 
+    def test_serialisation(self):
+        import pickle
+        import io
+        esn = ESN(N_in, N_out, random_state=1)
+        with io.BytesIO() as buf:
+            pickle.dump(esn, buf)
+            buf.flush()
+            buf.seek(0)
+            esn_unpickled = pickle.load(buf)
+        self._compare(esn, esn_unpickled, should_be='same')
+
 
 class InitArguments(unittest.TestCase):
 
